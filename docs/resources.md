@@ -12,7 +12,7 @@ Resources let you expose data that an LLM can read. MCPConnect supports three ki
 
 Decorate a method with `[McpResource]` to expose it as a readable resource:
 
-```delphi
+```pascal
 type
   TWeatherResource = class
   public
@@ -27,7 +27,7 @@ The `[McpResource]` attribute takes `(name, uri, mimeType, description)`.
 
 MCP Apps are UI resources served via a `ui://` URI scheme. The client (if it supports it) renders the returned content as an interactive widget.
 
-```delphi
+```pascal
 type
   TMyApp = class
   public
@@ -47,7 +47,7 @@ The `[McpApp]` attribute takes `(name, uri, description)`.
 
 A tool can declare an associated MCP App using the `app=` annotation in `[McpTool]`:
 
-```delphi
+```pascal
 [McpTool('get_tickets', 'List available tickets', 'app=ui://my-app/index.html')]
 function GetTickets: TTickets;
 ```
@@ -58,7 +58,7 @@ This tells the client that the tool result can be rendered inside the specified 
 
 All resource types are registered in the `.Resources` section:
 
-```delphi
+```pascal
 .Resources
   .SetBasePath(GetCurrentDir + '\data')
   .RegisterClass(TWeatherResource)             // [McpResource] class
@@ -70,7 +70,7 @@ All resource types are registered in the `.Resources` section:
 
 Remember to declare `Resources` in `.SetCapabilities`:
 
-```delphi
+```pascal
 .Server
   .SetCapabilities([Tools, Resources])
 .BackToMCP

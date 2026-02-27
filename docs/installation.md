@@ -21,10 +21,3 @@ git clone https://github.com/delphi-blocks/MCPConnect.git
 
 **3. Add to Project Path:** Add the `Source` directory of both cloned repositories to your Delphi Project's search path.
 
-**4. Integrate:** Reference the core units in your server project:
-
-```delphi
-uses
-  MCPConnect.JRPC.Core,
-  MCPConnect.MCP.Attributes;
-```

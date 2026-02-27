@@ -23,11 +23,14 @@ export default defineConfig({
           { text: 'Installation', link: '/installation' },
           { text: 'Server Setup', link: '/server-setup' },
           { text: 'Tools', link: '/tools' },
+          { text: 'Serialization', link: '/serialization' },
+          { text: 'Memory Management', link: '/memory' },
           { text: 'Sessions', link: '/sessions' },
+          { text: 'Authentication', link: '/authentication' },
           { text: 'Resources', link: '/resources' },
           { text: 'Connecting LLM Clients', link: '/clients' },
           { text: 'Testing', link: '/testing' },
-          { text: 'JSON-RPC & JRPC', link: '/jrpc' }
+          { text: 'JSON-RPC', link: '/jrpc' }
         ]
       }
     ],

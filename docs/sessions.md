@@ -6,7 +6,7 @@ MCPConnect provides built-in session management for maintaining stateful interac
 
 Add session configuration to your server setup:
 
-```delphi
+```pascal
 uses
   MCPConnect.Configuration.Session,
   MCPConnect.Configuration.MCP,
@@ -44,7 +44,7 @@ Sessions are automatically injected into your tool classes using the `[Context]`
 
 ### Option 1: Generic JSON Storage (`TSessionData`)
 
-```delphi
+```pascal
 type
   TShoppingCartTool = class
   private
@@ -77,7 +77,7 @@ end;
 
 For better type safety, create a custom session class that extends `TSessionBase`:
 
-```delphi
+```pascal
 type
   TCartItem = class
   private
@@ -134,6 +134,6 @@ end;
 
 Register your custom session class in the configuration:
 
-```delphi
+```pascal
 .SetSessionClass(TShoppingSession)
 ```

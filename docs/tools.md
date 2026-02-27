@@ -6,7 +6,7 @@ Tools are the primary way to expose executable actions to an LLM. A tool is a De
 
 Register the class and use `[McpTool]` on the methods you want to expose:
 
-```delphi
+```pascal
 unit Demo.HelpDeskService;
 
 interface
@@ -43,7 +43,7 @@ When building larger MCP servers with multiple tool classes, assign a **scope** 
 
 ### Defining a Scoped Tool Class
 
-```delphi
+```pascal
 [McpScope('auth')]
 TAuthService = class
 public
@@ -59,7 +59,7 @@ Exposed tool names will be `auth_login` and `auth_logout`.
 
 ### Multiple Scoped Classes
 
-```delphi
+```pascal
 [McpScope('auth')]    TAuthService   = class ... end;
 [McpScope('tickets')] TTicketService = class ... end;
 [McpScope('users')]   TUserService   = class ... end;
@@ -80,7 +80,7 @@ FJRPCServer
 
 `[McpTool]` accepts an optional third string parameter for key-value annotations:
 
-```delphi
+```pascal
 [McpTool('my_tool', 'Description', 'app=ui://my-app/index.html,category=demo')]
 function MyTool: string;
 ```
