@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Delphi **10 or newer** (support for Attributes is essential).
+- Delphi **12 or newer** (support for Attributes is essential).
 - [Neon](https://github.com/paolo-rossi/delphi-neon) as Serialization Engine.
 
 ## Getting Started

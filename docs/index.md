@@ -5,7 +5,7 @@ layout: home
 hero:
   name: "MCPConnect"
   image:
-    src: ./logo-white.png
+    src: ./logo-white-square.png
     alt: MCPConnect
   text: "A Delphi MCP Server Library"
   tagline: A powerful, attribute-driven framework for building Model Context Protocol (MCP) Servers in Delphi.
@@ -17,7 +17,7 @@ hero:
       text: Configure
       link: /server-setup
     - theme: alt
-      text: Your first MCP Tool
+      text: A sample MCP Tool
       link: /tools
 
 features:

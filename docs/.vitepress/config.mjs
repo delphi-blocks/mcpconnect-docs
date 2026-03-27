@@ -5,8 +5,10 @@ export default defineConfig({
   title: "MCPConnect",
   description: "MCPConnect documentation web site",
   lastUpdated: true,
+  head: [["link", { rel: "icon", href: "/favicon.ico" }]],
   themeConfig: {
     // https://vitepress.dev/reference/default-theme-config
+    logo: "/logo-white-square.png",
     search: {
       provider: 'local'
     },
