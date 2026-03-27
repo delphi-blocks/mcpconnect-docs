@@ -1,0 +1,36 @@
+name: Deploy
+
+on: workflow_dispatch
+
+jobs:
+  Deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.1.7
+      - name: Setup Node.js
+        uses: actions/setup-node@v4.0.3
+        with:
+            node-version: '18'      
+      - name: Install & Build
+        run: |
+          npm install
+          npm run docs:build
+      - name: List generated files
+        run: ls -l docs/.vitepress/dist
+      - name: Copy file via ssh with key
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER_NAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          strip_components: 3
+          source: docs/.vitepress/dist
+          target: /var/web/mcpconnect.delphiblocks.dev
+      - name: Cloudflare Cache Cleaner
+        uses: Cyb3r-Jak3/action-cloudflare-cache@v2.0.0
+        with:
+          zone: ${{ secrets.CF_ZONE_ID }}
+          api_token: ${{ secrets.CF_API_TOKEN }}
