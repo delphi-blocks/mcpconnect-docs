@@ -5,7 +5,7 @@ Resources let you expose data that an LLM can read. MCPConnect supports three ki
 | Type | Attribute | Description |
 |------|-----------|-------------|
 | Class-based resources | `[McpResource]` | Methods that return dynamic content |
-| MCP Apps | `[McpApp]` | Methods that return a UI (e.g. HTML) rendered by the client |
+| MCP Apps | `[McpAppUI]` | Methods that return a UI (e.g. HTML) rendered by the client |
 | Static files | — | Files served directly from disk |
 
 ## Class-Based Resources
@@ -31,7 +31,7 @@ MCP Apps are UI resources served via a `ui://` URI scheme. The client (if it sup
 type
   TMyApp = class
   public
-    [McpApp('ui://my-app/index.html', 'ui://my-app/index.html', 'An interactive UI panel')]
+    [McpAppUI('my-app', 'ui://my-app/index.html', 'An interactive UI panel')]
     function GetUI: string;
   end;
 
@@ -41,18 +41,28 @@ begin
 end;
 ```
 
-The `[McpApp]` attribute takes `(name, uri, description)`.
+The `[McpAppUI]` attribute takes `(name, uri, description)`.
 
 ### Linking a Tool to an App
 
-A tool can declare an associated MCP App using the `app=` annotation in `[McpTool]`:
+A tool can declare that its result should be rendered by an MCP App in two equivalent ways:
+
+**Option A** — separate `[McpApp]` attribute on the tool method (takes the app URI):
+
+```pascal
+[McpTool('get_tickets', 'List available tickets')]
+[McpApp('ui://my-app/index.html')]
+function GetTickets: TTickets;
+```
+
+**Option B** — `app=` annotation in the third parameter of `[McpTool]`:
 
 ```pascal
 [McpTool('get_tickets', 'List available tickets', 'app=ui://my-app/index.html')]
 function GetTickets: TTickets;
 ```
 
-This tells the client that the tool result can be rendered inside the specified app UI.
+Both tell the client that the tool result can be rendered inside the specified app UI.
 
 ## Registering Resources and Static Files
 
@@ -62,7 +72,7 @@ All resource types are registered in the `.Resources` section:
 .Resources
   .SetBasePath(GetCurrentDir + '\data')
   .RegisterClass(TWeatherResource)             // [McpResource] class
-  .RegisterClass(TMyApp)                       // [McpApp] class
+  .RegisterClass(TMyApp)                       // [McpAppUI] class
   .RegisterFile('readme.md', 'Documentation') // Static text file
   .RegisterFile('docs\guide.pdf', 'User Guide') // Static binary file
 .BackToMCP

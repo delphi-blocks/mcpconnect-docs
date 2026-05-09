@@ -2,8 +2,9 @@
 
 ## Requirements
 
-- Delphi **12 or newer** (support for Attributes is essential).
+- Delphi **11 Alexandria or newer** — tested on 11, 12 and 13.
 - [Neon](https://github.com/paolo-rossi/delphi-neon) as Serialization Engine.
+- [Logify](https://github.com/delphi-blocks/Logify) as (meta) logging library.
 
 ## Getting Started
 

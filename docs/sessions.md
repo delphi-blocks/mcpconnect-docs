@@ -17,7 +17,7 @@ FJRPCServer
     .SetLocation(TSessionIdLocation.Header)  // or Cookie
     .SetHeaderName('Mcp-Session-Id')         // Default for MCP
     .SetTimeout(30)                           // Minutes
-    .SetSessionClass(TSessionData)            // Or your custom class
+    .SetSessionClass(TMCPSessionData)            // Or your custom class
   .ApplyConfig
 
   .Plugin.Configure<IMCPConfig>
@@ -42,14 +42,14 @@ FJRPCServer
 
 Sessions are automatically injected into your tool classes using the `[Context]` attribute.
 
-### Option 1: Generic JSON Storage (`TSessionData`)
+### Option 1: Generic JSON Storage (`TMCPSessionData`)
 
 ```pascal
 type
   TShoppingCartTool = class
   private
     [Context]
-    FSession: TSessionData;  // Automatically injected
+    FSession: TMCPSessionData;  // Automatically injected
   public
     [McpTool('cart_add', 'Add item to shopping cart')]
     function AddToCart(
@@ -75,7 +75,7 @@ end;
 
 ### Option 2: Custom Typed Session
 
-For better type safety, create a custom session class that extends `TSessionBase`:
+For better type safety, create a custom session class that extends `TMCPSessionBase`:
 
 ```pascal
 type
@@ -88,7 +88,7 @@ type
     property Quantity: Integer read FQuantity write FQuantity;
   end;
 
-  TShoppingSession = class(TSessionBase)
+  TShoppingSession = class(TMCPSessionBase)
   private
     FCart: TObjectDictionary<string, TCartItem>;
   public
