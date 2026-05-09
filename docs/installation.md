@@ -14,11 +14,17 @@
 git clone https://github.com/paolo-rossi/delphi-neon
 ```
 
-**2. Clone the MCPConnect repository:**
+**2. Clone the Logify repository:**
+
+```bash
+git clone https://github.com/delphi-blocks/Logify
+```
+
+**3. Clone the MCPConnect repository:**
 
 ```bash
 git clone https://github.com/delphi-blocks/MCPConnect.git
 ```
 
-**3. Add to Project Path:** Add the `Source` directory of both cloned repositories to your Delphi Project's search path.
+**4. Add to Project Path:** Add the `Source` directory of all cloned repositories to your Delphi Project's search path.
 
