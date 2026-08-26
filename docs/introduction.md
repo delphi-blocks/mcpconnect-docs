@@ -1,5 +1,9 @@
 # Introduction
 
+::: warning MCP 2026-07-28
+Support for the MCP specification version [2026-07-28](https://modelcontextprotocol.io/docs/2026-07-28/getting-started/intro) is currently under development in the [feature/mcp-2026-07-28](https://github.com/delphi-blocks/MCPConnect/tree/feature/mcp-2026-07-28) branch.
+:::
+
 ## What is MCP?
 
 The Model Context Protocol (MCP) is an open standard for connecting large language models (LLMs) to external tools and data.
@@ -23,6 +27,7 @@ MCPConnect handles the serialization, routing, and context management required f
 - 🚛 **Transports** — Built-in HTTP (WebBroker, Indy) and STDIO transports for both stateless and persistent connections.
 - 🗂️ **Session Management** — Built-in stateful session support across requests with automatic cleanup and custom session data.
 - ⚡ **Low boilerplate** — MCPConnect generates all the MCP endpoints for you, apart from your tools, prompts and resources.
+- 🔐 **OAuth 2.1** — Built-in support for OAuth 2.1 bearer-token authentication following the MCP Authorization specification, with pluggable token validators, JWKS key management, and a metadata proxy for providers that don't fully advertise PKCE support.
 
 ## Key Features
 
@@ -31,6 +36,7 @@ MCPConnect handles the serialization, routing, and context management required f
 - **Automatic Routing** — The framework automatically scans and registers methods decorated with the appropriate attributes, handling all request routing.
 - **Easy-to-use classes** for tools, prompts, and resources.
 - **Session Management** — Thread-safe session support with configurable timeout, automatic cleanup, and support for both generic (`TJSONObject`) and custom typed session data. Sessions are automatically injected via the `[Context]` attribute.
+- **OAuth 2.1 Authentication** — Acts as an OAuth 2.1 resource server following the [MCP Authorization specification](https://modelcontextprotocol.io/specification/draft/basic/authorization). Delegates authentication to any external authorization server (Microsoft Entra ID, Auth0, Keycloak, Okta, or any OpenID Connect provider).
 - **API-Key authentication** for HTTP transport.
 - **JSON-RPC** — MCPConnect contains a comprehensive, high-performance JSON-RPC 2.0 library (`JRPC`) built specifically for Delphi.
 - **Automatic JSON Schema generation** — Using the powerful Neon `TSchemaGenerator`, MCPConnect supports any Delphi type as parameter or result.

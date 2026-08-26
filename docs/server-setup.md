@@ -1,6 +1,12 @@
 # Server Setup
 
-This guide explains how to create an MCP server with MCPConnect, covering the available transport options, their trade-offs, and the plugin configuration system.
+This guide explains how to create an MCP server with MCPConnect, covering the available transport options and their trade-offs.
+
+## Using the IDE Wizard
+
+The quickest way to create a new MCP server project is through the Delphi IDE wizard. Go to **File → New → Other → MCPConnect** to launch the project wizard, which generates a ready-to-run server with the transport and configuration of your choice.
+
+![MCPConnect IDE Wizard](./wizard.png)
 
 ## MCP Transport Types
 
@@ -30,37 +36,26 @@ uses
   MCPConnect.Transport.Stdio,
   MCPConnect.Configuration.MCP,
   MCPConnect.Content.Writers.RTL,
-  MCPConnect.Content.Writers.VCL,
   MyApp.Tools;   // Unit with your MCP tool classes
 
 procedure StartServer;
 var
-  LJRPCServer: TJRPCServer;
-  LStdioServer: TJRPCStdioServer;
+  LServer: TJRPCStdioServer;
 begin
-  LJRPCServer := TJRPCServer.Create(nil);
+  LServer := TJRPCStdioServer.Create(nil);
   try
-    LJRPCServer
-      .Plugin.Configure<IMCPConfig>
-        .Server
-          .SetName('my-mcp-server')
-          .SetVersion('1.0.0')
-          .SetCapabilities([Tools])
-          .RegisterWriter(TMCPStreamWriter)
-        .BackToMCP
-        .Tools
-          .RegisterClass(TMyTool)
-        .BackToMCP;
+    // Register tools, resources, prompts, sessions, authentication, etc.
+    // See the Plugin System chapter for details
+    //
+    // LServer.JRPCServer
+    //   .Plugin.Configure<IMCPConfig>
+    //     .Tools
+    //       .RegisterClass(TMyTool)
+    //     .BackToMCP;
 
-    LStdioServer := TJRPCStdioServer.Create(nil);
-    try
-      LStdioServer.Server := LJRPCServer;
-      LStdioServer.StartServerAndWait;
-    finally
-      LStdioServer.Free;
-    end;
+    LServer.StartServerAndWait;
   finally
-    LJRPCServer.Free;
+    LServer.Free;
   end;
 end;
 
@@ -79,16 +74,19 @@ end.
 As an alternative, you can manage the loop manually using `StartServer` and `ProcessRequests`. This is useful when you need to interleave MCP request processing with other work (logging, watchdog pings, periodic tasks, etc.):
 
 ```pascal
-LStdioServer.StartServer;
-while not LStdioServer.Terminated do
+LServer.StartServer;
+while not LServer.Terminated do
 begin
-  LStdioServer.ProcessRequests;
+  LServer.ProcessRequests;
   Sleep(1000);
-  Writeln('ping');
 end;
 ```
 
 `ProcessRequests` handles any pending incoming messages and returns immediately, while `Terminated` becomes `True` when the client closes the connection.
+
+::: warning
+Never write to stdout in a stdio server — it corrupts the JSON-RPC stream. Use `ErrOutput` or a Logify file adapter for diagnostics.
+:::
 
 **Pros:**
 - Zero network configuration — no ports, firewalls, or TLS to manage.
@@ -101,7 +99,59 @@ end;
 
 ## Streamable HTTP Transport
 
-MCPConnect provides two HTTP transport implementations: **WebBroker** and **Indy**. Both expose the same MCP protocol over HTTP, but differ in architecture and flexibility.
+MCPConnect provides two HTTP transport implementations: **Indy** and **WebBroker**. Both expose the same MCP protocol over HTTP, but differ in architecture and flexibility.
+
+### Indy
+
+The Indy transport embeds a `TIdHTTPServer`-based HTTP server directly in your application via `TJRPCIndyServer`. This gives you fine-grained control over every aspect of the HTTP server.
+
+**Create a VCL Application** and add `MCPConnect.Transport.Indy` to the uses clause. Use the `CreateMCPServer` convenience factory to create the server:
+
+```pascal
+uses
+  MCPConnect.JRPC.Server,
+  MCPConnect.Transport.Indy,
+  MCPServer.Config;
+
+procedure TfrmMain.FormCreate(Sender: TObject);
+begin
+  FServer := TJRPCIndyServer.CreateMCPServer(Self);
+
+  // Register tools, resources, prompts, sessions, authentication, etc.
+  // See the Plugin System chapter for details
+  //
+  // FServer.JRPCServer
+  //   .Plugin.Configure<IMCPConfig>
+  //     .Tools
+  //       .RegisterClass(TMyTool)
+  //     .BackToMCP;
+
+  StartServer;
+end;
+
+procedure TfrmMain.StartServer;
+begin
+  if not FServer.Active then
+  begin
+    FServer.Bindings.Clear;
+    FServer.DefaultPort := StrToInt(EditPort.Text);
+    FServer.Active := True;
+  end;
+end;
+```
+
+`CreateMCPServer` creates the Indy server, creates and owns a `TJRPCServer`, and wires the MCP request handler (CORS, sessions, SSE, OAuth) into Indy's HTTP events. The `JRPCServer` property exposes the protocol engine for configuration.
+
+`TJRPCIndyServer` descends from `TIdCustomHTTPServer`, so all standard Indy properties are available: `Bindings`, `DefaultPort`, `IOHandler` (for SSL/TLS), `Scheduler`, `MaxConnections`, etc.
+
+**Pros:**
+- Full control over HTTP server behavior: SSL, threading, binding, custom events.
+- Server-Sent Events (server-to-client notifications) work on all supported Delphi versions.
+- Suitable for self-hosted services that need custom network-level configuration.
+
+**Cons:**
+- Requires more configuration for production deployments (TLS, load balancing, etc.).
+- Does not plug into existing WebBroker applications.
 
 ### WebBroker
 
@@ -109,58 +159,53 @@ WebBroker is Delphi's built-in framework for web server applications. MCPConnect
 
 **Create a Web Server Application** via **File → New → Other → Web → Web Server Application**. The deployment target (standalone, ISAPI, Apache module, CGI, FastCGI) is selected at project creation time and can be changed later without touching your MCP code.
 
-Add the configuration in your `TWebModule.OnCreate` event:
+WebBroker creates one web module per request thread, so the `TJRPCServer` must be a global singleton shared by every dispatcher instance:
 
 ```pascal
 uses
   Web.HTTPApp,
-  MCPConnect.JRPC.Server,
-  MCPConnect.MCP.Server.Api,
   MCPConnect.Transport.WebBroker,
-  MCPConnect.Configuration.MCP,
-  MCPConnect.Content.Writers.RTL,
-  MCPConnect.Content.Writers.VCL,
-  MyApp.Tools,
-  MyApp.Resources;
+  MCPConnect.JRPC.Server,
+  MCPServer.Config;
+
+var
+  JRPCServer: TJRPCServer;
 
 procedure TWebModule1.WebModuleCreate(Sender: TObject);
+var
+  LJRPCDispatcher: TJRPCDispatcher;
 begin
-  FJRPCServer := TJRPCServer.Create(Self);
+  if not Assigned(JRPCServer) then
+  begin
+    JRPCServer := TJRPCServer.Create(nil);
 
-  FJRPCServer
-    .Plugin.Configure<IMCPConfig>
-      .Server
-        .SetName('my-mcp-server')
-        .SetVersion('1.0.0')
-        .SetCapabilities([Tools, Resources])
-        .RegisterWriter(TMCPImageWriter)
-        .RegisterWriter(TMCPStreamWriter)
-      .BackToMCP
-      .Resources
-        .SetBasePath(GetCurrentDir + '\data')
-        .RegisterClass(TWeatherResource)
-        .RegisterFile('docs\readme.md', 'Documentation')
-      .BackToMCP
-      .Tools
-        .RegisterClass(TMyTool)
-      .BackToMCP;
+    // Register tools, resources, prompts, sessions, authentication, etc.
+    // See the Plugin System chapter for details
+    //
+    // JRPCServer
+    //   .Plugin.Configure<IMCPConfig>
+    //     .Tools
+    //       .RegisterClass(TMyTool)
+    //     .BackToMCP;
+  end;
 
-  FJRPCDispatcher := TJRPCDispatcher.Create(Self);
-  FJRPCDispatcher.PathInfo := '/mcp';
-  FJRPCDispatcher.Server := FJRPCServer;
+  LJRPCDispatcher := TJRPCDispatcher.Create(Self);
+  LJRPCDispatcher.PathInfo := '/mcp';
+  LJRPCDispatcher.Server := JRPCServer;
 end;
+
+initialization
+  JRPCServer := nil;
+
+finalization
+  JRPCServer.Free;
 ```
 
-#### Automatic Integration with WebBroker
+`TJRPCDispatcher` registers itself with the owning `TWebModule` in its constructor — no WebBroker action to add and no `OnAction` handler to write. Requests not matching `PathInfo` fall through to the default handler.
 
-`TJRPCDispatcher` integrates with WebBroker through Delphi's standard component ownership. When created with the `TWebModule` as owner, it registers itself automatically — no additional wiring is needed:
-
-```pascal
-// Self = TWebModule; this single line registers the dispatcher with WebBroker
-FJRPCDispatcher := TJRPCDispatcher.Create(Self);
-```
-
-For each incoming request, WebBroker iterates its registered dispatchers and routes the request to the one whose `PathInfo` matches. Your MCP endpoint will be available at `/mcp` (or any path you choose).
+::: warning
+Streaming server-to-client notifications over WebBroker (SSE) requires Delphi 13.1+. On Delphi 11 and 12, responses are still correct but notifications cannot be pushed. Use the Indy transport if you need them on older Delphi versions.
+:::
 
 **Pros:**
 - Deploy as standalone, ISAPI, Apache module, CGI, or FastCGI without changing MCP code.
@@ -169,179 +214,8 @@ For each incoming request, WebBroker iterates its registered dispatchers and rou
 
 **Cons:**
 - HTTP behavior (timeouts, headers, keep-alive) is controlled by the WebBroker host, not by your code.
-- Less direct access to raw HTTP connection details.
+- SSE requires Delphi 13.1+.
 
-### Indy
+## What's Next
 
-The Indy transport embeds a `TIdHTTPServer`-based HTTP server directly in your application via `TJRPCIndyServer`. This gives you fine-grained control over every aspect of the HTTP server.
-
-**Create a VCL Application** and add `MCPConnect.Transport.Indy` to the uses clause. The server is typically created and configured in the main form:
-
-```pascal
-uses
-  MCPConnect.JRPC.Server,
-  MCPConnect.MCP.Server.Api,
-  MCPConnect.Transport.Indy,
-  MCPConnect.Configuration.MCP,
-  MCPConnect.Content.Writers.RTL,
-  MCPConnect.Content.Writers.VCL,
-  MyApp.Tools;
-
-procedure TForm1.FormCreate(Sender: TObject);
-begin
-  FJRPCServer := TJRPCServer.Create(Self);
-
-  FJRPCServer
-    .Plugin.Configure<IMCPConfig>
-      .Server
-        .SetName('my-mcp-server')
-        .SetVersion('1.0.0')
-        .SetCapabilities([Tools])
-        .RegisterWriter(TMCPStreamWriter)
-      .BackToMCP
-      .Tools
-        .RegisterClass(TMyTool)
-      .BackToMCP;
-
-  FIndyServer := TJRPCIndyServer.Create(Self);
-  FIndyServer.Server := FJRPCServer;
-end;
-
-procedure TForm1.StartServer;
-begin
-  if not FIndyServer.Active then
-  begin
-    FIndyServer.DefaultPort := StrToInt(EditPort.Text);
-    FIndyServer.Active := True;
-  end;
-end;
-```
-
-`TJRPCIndyServer` exposes all standard `TIdHTTPServer` properties and events, so you can configure SSL/TLS, bind to specific interfaces, tune thread pool sizes, handle authentication events, and more.
-
-**Pros:**
-- Full control over HTTP server behavior: SSL, threading, binding, custom events.
-- Suitable for self-hosted services that need custom network-level configuration.
-- No dependency on WebBroker or a web server host.
-
-**Cons:**
-- Requires more configuration for production deployments (TLS, load balancing, etc.).
-- Does not plug into existing WebBroker applications.
-
-## Plugin System and Fluent Interface
-
-`TJRPCServer` is configured through a **plugin system** based on a fluent interface. Each feature area — MCP configuration, sessions, authentication, JSON serialization — is encapsulated in a separate plugin, registered via `.Plugin.Configure<IPluginInterface>`.
-
-The general pattern is:
-
-```pascal
-FJRPCServer
-  .Plugin.Configure<IPluginA>
-    .SetOption1(...)
-    .SetOption2(...)
-  .ApplyConfig
-
-  .Plugin.Configure<IPluginB>
-    ...
-  .ApplyConfig;
-```
-
-Each `.Plugin.Configure<T>` call returns the interface `T`, exposing the configuration methods for that plugin. When finished, `.ApplyConfig` returns to the `TJRPCServer` so the next plugin can be chained.
-
-> This chapter covers only the `IMCPConfig` plugin. Later chapters will address the session management plugin (`ISessionConfig`), the authentication plugin (`IAuthTokenConfig`), and the JSON serialization plugin (`IJRPCNeonConfig`).
-
-## The IMCPConfig Plugin
-
-`IMCPConfig` is the core configuration plugin. It declares the server's identity, its MCP capabilities, and registers the tool and resource classes that implement the MCP API.
-
-Access it with:
-
-```pascal
-uses
-  MCPConnect.Configuration.MCP;
-```
-
-The plugin is divided into three sub-sections, each accessed by name and terminated with `.BackToMCP`:
-
-```pascal
-FJRPCServer
-  .Plugin.Configure<IMCPConfig>
-
-    .Server
-      // Server identity and capabilities
-    .BackToMCP
-
-    .Resources
-      // Resource registration
-    .BackToMCP
-
-    .Tools
-      // Tool registration
-    .BackToMCP;
-```
-
-### Server Section
-
-The `.Server` section declares the server's identity and which MCP capabilities it exposes.
-
-| Method | Description |
-|--------|-------------|
-| `SetName(name)` | Server name reported during MCP initialization |
-| `SetVersion(version)` | Server version string |
-| `SetCapabilities([...])` | Declares which MCP capabilities are active: `Tools`, `Resources`, `Prompts` |
-| `RegisterWriter(class)` | Registers a content writer for converting Delphi types to MCP content |
-
-```pascal
-.Server
-  .SetName('delphi-mcp-server')
-  .SetVersion('2.0.0')
-  .SetCapabilities([Tools, Resources])
-  .RegisterWriter(TMCPImageWriter)
-  .RegisterWriter(TMCPPictureWriter)
-  .RegisterWriter(TMCPStreamWriter)
-  .RegisterWriter(TMCPStringListWriter)
-.BackToMCP
-```
-
-`SetCapabilities` controls which capability blocks appear in the MCP `initialize` response. Only declare capabilities you actually use.
-
-Content writers (see the Content Writers chapter) teach MCPConnect how to serialize specific Delphi types — `TStream`, `TPicture`, `TStringList`, etc. — as MCP content items.
-
-### Tools Section
-
-The `.Tools` section registers the Delphi classes that contain methods decorated with `[McpTool]`.
-
-| Method | Description |
-|--------|-------------|
-| `RegisterClass(class)` | Registers a class whose `[McpTool]` methods are exposed as MCP tools |
-
-```pascal
-.Tools
-  .RegisterClass(THelpDeskService)
-  .RegisterClass(TTestTool)
-.BackToMCP
-```
-
-MCPConnect inspects each registered class via RTTI and automatically generates the MCP tool schema from method signatures and `[McpParam]` attributes. See the Tools chapter for details on annotating tool methods.
-
-### Resources Section
-
-The `.Resources` section registers classes with `[McpResource]` methods and static files.
-
-| Method | Description |
-|--------|-------------|
-| `SetBasePath(path)` | Base directory for resolving relative file paths |
-| `RegisterClass(class)` | Registers a class whose `[McpResource]` methods are exposed as MCP resources |
-| `RegisterFile(path, name)` | Exposes a static file as an MCP resource |
-
-```pascal
-.Resources
-  .SetBasePath(GetCurrentDir + '\data')
-  .RegisterClass(TWeatherResource)
-  .RegisterClass(TDeplphiDayApp)
-  .RegisterFile('index.md', 'Index')
-  .RegisterFile('documentation\mcp\mcpconnect.pdf', 'MCPConnect Introduction')
-.BackToMCP
-```
-
-`SetBasePath` is used as the root for `RegisterFile` relative paths. See the Resources chapter for details on implementing resource classes.
+Once the transport is in place, all further configuration — registering tools, resources, prompts, sessions, authentication, and more — is done through the [Plugin System](./plugins). The server configuration is transport-independent: the same `TServerConfigurator.ConfigureServer` call works identically across Indy, WebBroker, and STDIO.

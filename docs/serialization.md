@@ -54,47 +54,43 @@ The LLM receives a JSON array with one object per ticket.
 
 ## TContentList — Full Control
 
-When you need to include multiple content items, mix content types (text + image, text + audio, …), or produce binary output, return a `TContentList` built with `TToolResultBuilder`:
+When you need to include multiple content items, mix content types (text + image, text + audio, …), or produce binary output, return a `TContentList`. All methods return `Self`, so calls can be chained:
 
 ```pascal
 uses
   MCPConnect.MCP.Types;
 
-[McpTool('buy_ticket', 'Purchase a ticket and return confirmation')]
-function BuyTicket(
-  [McpParam('id', 'Ticket ID')] AId: Integer
-): TContentList;
+[McpTool('buy_tickets', 'Confirm purchase of all tickets in the cart')]
+function BuyTickets: TContentList;
 
-function TMyTool.BuyTicket(AId: Integer): TContentList;
+function TDelphiDayTool.BuyTickets: TContentList;
 var
-  LBuilder: IToolResultBuilder;
   LStream: TFileStream;
 begin
-  LBuilder := TToolResultBuilder.CreateInstance;
-
-  LBuilder.AddText('Purchase completed successfully.');
+  Result := TContentList.Create;
+  Result.AddText('Purchase completed successfully.');
 
   LStream := TFileStream.Create('ticket.png', fmOpenRead or fmShareDenyWrite);
   try
-    LBuilder.AddImage('image/png', LStream);
+    Result.AddImage('image/png', LStream);
   finally
     LStream.Free;
   end;
-
-  Result := LBuilder.Build;
 end;
 ```
 
-### TToolResultBuilder methods
+### TContentList methods
 
 | Method | Description |
 |--------|-------------|
 | `AddText(text)` | Adds a plain-text content item |
 | `AddImage(mime, stream)` | Encodes a stream as base64 and adds an image content item |
+| `AddImage(mime, base64)` | Adds an image content item from an already-encoded base64 string |
 | `AddAudio(mime, stream)` | Encodes a stream as base64 and adds an audio content item |
+| `AddAudio(mime, base64)` | Adds an audio content item from an already-encoded base64 string |
 | `AddBlob(mime, stream)` | Encodes a stream as base64 and adds an embedded binary resource |
+| `AddBlob(mime, base64)` | Adds a blob from an already-encoded base64 string |
 | `AddLink(mime, uri, description)` | Adds a resource link (external URI reference) |
-| `Build` | Returns the assembled `TContentList` |
 
 ## Configuring Neon
 

@@ -1,5 +1,9 @@
 # Session Management
 
+::: warning MCP 2026-07-28
+Starting with the MCP specification version **2026-07-28**, the protocol becomes **stateless** — the `Mcp-Session-Id` header and server-side session lifecycle are removed from the spec. MCPConnect will continue to support application-level sessions for your own state management needs, but they will no longer be part of the MCP protocol itself.
+:::
+
 MCPConnect provides built-in session management for maintaining stateful interactions across multiple requests. Sessions are thread-safe, automatically managed, and can store both generic JSON data or fully typed custom objects.
 
 ## Configuring Session Support

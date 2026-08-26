@@ -1,17 +1,45 @@
-# Authentication
+# Security
 
-MCPConnect supports token-based authentication for HTTP transports (WebBroker and Indy). While authorization for MCP servers is optional, it is strongly recommended in the following scenarios:
+## CORS
 
-* The server accesses user-specific data (emails, documents, databases)
-* You need to audit who performed specific actions
-* The server exposes APIs that require explicit user consent
-* You are building for enterprise environments with strict access controls
-* You want to implement per-user rate limiting or usage tracking
+When your MCP server is accessed from a browser-based client (such as MCPJam Inspector or web-based MCP hosts), you need to enable CORS. CORS is configured in the `.Security` section of `IMCPConfig`:
 
-For HTTP-based transports, MCPConnect currently supports token-based authentication only. OAuth flows are typically designed for remotely hosted servers accessed over HTTP; however, OAuth is not currently supported by MCPConnect.
+```pascal
+.Security
+  .SetCORS(True)
+  .SetAllowedMethods(['GET', 'POST'])
+  .SetAllowedOrigins(['http://localhost'])
+.BackToMCP
+```
 
-::: info **💡 Authorization for Local MCP Servers**
-Authentication is not applicable to STDIO transport in the traditional network sense, since no network communication is involved — the MCP client launches the server process directly and communicates through its stdin/stdout pipes. However, local MCP servers using STDIO can still implement authorization by leveraging environment-based credentials or credentials provided by embedded third-party libraries. Because a STDIO-based MCP server runs locally, it can adopt flexible approaches for acquiring and validating user credentials, which may or may not rely on browser-based authentication flows. 
+| Method | Description |
+|--------|-------------|
+| `SetCORS(True)` | Enables CORS headers on every response, including error responses and well-known endpoints |
+| `SetAllowedMethods(methods)` | HTTP methods to allow. Only `POST` is needed for JSON-RPC; add `GET` if you want browser clients to open the SSE stream. `OPTIONS` preflights are always answered. |
+| `SetAllowedOrigins(origins)` | Allowlist of accepted origins. Supports exact matches and wildcard subdomains (e.g. `'https://*.example.com'`). |
+| `SetCookieSecure(False)` | Disables the `Secure` flag on session cookies — only for plain-HTTP development. Cookies are `HttpOnly + SameSite=Strict + Secure` by default. |
+
+If `SetAllowedOrigins` is not called, any origin is accepted (including requests with no `Origin` header). Once an allowlist is set, requests with a missing or unmatched origin are rejected — which may break tools like curl or Bruno that don't send an `Origin` header. For development, you can omit `SetAllowedOrigins` or guard it with `{$IFNDEF DEBUG}`:
+
+```pascal
+.Security
+  .SetCORS(True)
+  .SetAllowedMethods(['POST'])
+  {$IFNDEF DEBUG}
+  .SetAllowedOrigins(['https://my-production-origin.com'])
+  {$ENDIF}
+.BackToMCP
+```
+
+## Authentication
+
+MCPConnect supports two authentication mechanisms for HTTP transports (WebBroker and Indy):
+
+- **API-Key authentication** — a single shared token checked on every request (`IAuthTokenConfig`)
+- **OAuth 2.1** — bearer-token authentication delegated to an external authorization server (`IOAuthConfig`)
+
+::: info
+Authentication is not applicable to the STDIO transport — the MCP client launches the server process directly and communicates through stdin/stdout pipes, so no network authentication is involved.
 :::
 
 When authentication is configured, the server checks every incoming request for a valid token before processing it. Requests that do not carry the expected token are rejected with an authentication error.
@@ -88,10 +116,14 @@ The client must send:
 Cookie: SessionId=my-session-value
 ```
 
-## API Reference
+## IAuthTokenConfig API Reference
 
 | Method | Description |
 |--------|-------------|
 | `SetToken(token)` | The token string the server will compare against (case-sensitive) |
 | `SetTokenLocation(location)` | Where to extract the token: `Bearer` (default), `Header`, `Cookie` |
 | `SetTokenCustomHeader(name)` | Header or cookie name; required for `Header` and `Cookie` modes, ignored for `Bearer` |
+
+## OAuth 2.1
+
+MCPConnect also supports OAuth 2.1 bearer-token authentication, delegating to an external authorization server (Microsoft Entra ID, Auth0, Keycloak, Okta, or any OpenID Connect provider). See the dedicated [OAuth 2.1](./oauth) chapter for configuration, token validators, and usage.

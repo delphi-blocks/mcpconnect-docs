@@ -19,19 +19,36 @@ export default defineConfig({
 
     sidebar: [
       {
-        text: 'Guides',
+        text: 'Getting Started',
         items: [
           { text: 'Introduction', link: '/introduction' },
           { text: 'Installation', link: '/installation' },
           { text: 'Server Setup', link: '/server-setup' },
+          { text: 'Connecting LLM Clients', link: '/clients' },
+          { text: 'Testing', link: '/testing' }
+        ]
+      },
+      {
+        text: 'Core Concepts',
+        items: [
+          { text: 'Plugin System', link: '/plugins' },
           { text: 'Tools', link: '/tools' },
+          { text: 'Resources', link: '/resources' },
           { text: 'Serialization', link: '/serialization' },
           { text: 'Memory Management', link: '/memory' },
-          { text: 'Sessions', link: '/sessions' },
-          { text: 'Authentication', link: '/authentication' },
-          { text: 'Resources', link: '/resources' },
-          { text: 'Connecting LLM Clients', link: '/clients' },
-          { text: 'Testing', link: '/testing' },
+          { text: 'Sessions', link: '/sessions' }
+        ]
+      },
+      {
+        text: 'Security',
+        items: [
+          { text: 'CORS & API-Key', link: '/authentication' },
+          { text: 'OAuth 2.1', link: '/oauth' }
+        ]
+      },
+      {
+        text: 'Advanced',
+        items: [
           { text: 'JSON-RPC', link: '/jrpc' }
         ]
       }
