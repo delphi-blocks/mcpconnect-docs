@@ -24,5 +24,5 @@ From the web interface, add your Delphi MCP server by providing its endpoint URL
 The official [MCP Inspector](https://modelcontextprotocol.io/docs/2026-07-28/tools/inspector) is another option for testing and debugging MCP servers. Launch it with:
 
 ```bash
-npx @anthropic-ai/inspector@latest
+npx @modelcontextprotocol/inspector@latest
 ```
