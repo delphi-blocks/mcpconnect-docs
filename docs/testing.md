@@ -6,6 +6,8 @@ MCPConnect servers can be tested using different approaches, depending on your n
 
 For a more specialized experience, use **MCPJam Inspector** — a tool specifically designed for testing and debugging MCP servers. It provides a web-based interface to explore your server's capabilities and test tools interactively.
 
+![MCPJam](./mcpjam.png)
+
 ### Quick Start
 
 ```bash
