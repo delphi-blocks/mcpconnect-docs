@@ -71,9 +71,9 @@ public
 end;
 ```
 
-Exposed tool names will be `auth_login` and `auth_logout`. The separator is `_` by default and can be changed with `Server.SetScopeSeparator`.
+Exposed tool names will be `auth_login` and `auth_logout`. The separator is `_` by default and can be changed via the `SetScopeSeparator` option in the [Server configuration](plugins.md#server-section).
 
-> **Note:** Tool names must match the MCP pattern `^[a-zA-Z0-9_-]{1,64}$` (only alphanumeric, underscore, hyphen).
+> **Note:** MCPConnect does not enforce any restriction on tool names. However, the MCP specification recommends that tool names be 1–64 characters long, case-sensitive, and limited to alphanumeric characters, underscores (`_`), dashes (`-`), dots (`.`), and forward slashes (`/`).
 
 ## Tool Annotations
 

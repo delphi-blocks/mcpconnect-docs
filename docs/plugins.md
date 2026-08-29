@@ -52,19 +52,27 @@ FJRPCServer
 
 ### Server Section
 
-The `.Server` section declares the server's identity and which MCP capabilities it exposes.
+The `.Server` section declares the server's identity, namespace settings, and which MCP capabilities it exposes.
 
 | Method | Description |
 |--------|-------------|
-| `SetName(name)` | Server name reported during MCP initialization |
-| `SetVersion(version)` | Server version string |
-| `SetCapabilities([...])` | Declares which MCP capabilities are active: `Tools`, `Resources`, `Prompts` |
+| `SetName(name)` | Server name reported during MCP initialization (default: `'MCPServer'`) |
+| `SetDescription(description)` | Server description returned in the MCP initialize response |
+| `SetVersion(version)` | Server version string (default: `'1.0'`) |
+| `SetIconFolder(folder)` | Base folder for resolving icon file paths referenced via tags |
+| `SetScopeSeparator(separator)` | Separator between scope and tool/prompt name (default: `'_'`). Must be MCP-compliant (`a-zA-Z0-9_-` only) |
+| `SetCapabilities([...])` | Declares which MCP capabilities are active: `Tools`, `Resources`, `Prompts`, `Tasks`, `Logging`, `Completions` |
+| `SetCapabilities(proc)` | Overload accepting a `TProc<TServerCapabilities>` for fine-grained capability configuration |
+| `SetCapabilities(obj)` | Overload accepting a `TServerCapabilities` instance directly (the config takes ownership) |
 | `RegisterWriter(class)` | Registers a content writer for converting Delphi types to MCP content |
 
 ```pascal
 .Server
   .SetName('delphi-mcp-server')
+  .SetDescription('A Delphi-powered MCP server')
   .SetVersion('2.0.0')
+  .SetIconFolder(GetCurrentDir + '\icons')
+  .SetScopeSeparator('_')
   .SetCapabilities([Tools, Resources])
   .RegisterWriter(TMCPImageWriter)
   .RegisterWriter(TMCPPictureWriter)
@@ -73,7 +81,11 @@ The `.Server` section declares the server's identity and which MCP capabilities 
 .BackToMCP
 ```
 
-`SetCapabilities` controls which capability blocks appear in the MCP `initialize` response. Only declare capabilities you actually use.
+`SetCapabilities` controls which capability blocks appear in the MCP `initialize` response. Only declare capabilities you actually use. If `SetCapabilities` is never called, MCPConnect infers capabilities from the registered tools, resources, and prompts.
+
+`SetScopeSeparator` controls how scoped names are built. When a class is annotated with `[MCPScope('auth')]` and the separator is `'_'`, a tool named `login` becomes `auth_login`.
+
+`SetIconFolder` sets the base directory used to resolve relative icon paths specified via the `icon` tag on tools, prompts, or resources. If the icon value is already a full URL (contains `://`), it is used as-is.
 
 Content writers (see the Content Writers chapter) teach MCPConnect how to serialize specific Delphi types — `TStream`, `TPicture`, `TStringList`, etc. — as MCP content items.
 
