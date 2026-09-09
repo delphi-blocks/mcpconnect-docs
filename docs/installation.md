@@ -24,29 +24,35 @@ blocks install delphi-blocks.mcpconnect
 
 ## Manual Installation
 
-**1. Clone the Neon repository:**
+**1. Clone the MCPConnect repository:**
 
 ```bash
-git clone https://github.com/paolo-rossi/delphi-neon
+git clone https://github.com/delphi-blocks/MCPConnect
 ```
 
-**2. Clone the JOSE-JWT repository:**
+**2. Clone the Logify repository:**
 
 ```bash
-git clone https://github.com/paolo-rossi/delphi-jose-jwt
+git clone https://github.com/delphi-blocks/Logify ./MCPConnect/Libs/Logify
 ```
 
-**3. Clone the Logify repository:**
+**3. Clone the Delphi-JRPC repository:**
 
 ```bash
-git clone https://github.com/delphi-blocks/Logify
+git clone https://github.com/delphi-blocks/Delphi-JRPC ./MCPConnect/Libs/JRPC
 ```
 
-**4. Clone the MCPConnect repository:**
+**4. Clone the Neon repository:**
 
 ```bash
-git clone https://github.com/delphi-blocks/MCPConnect.git
+git clone https://github.com/paolo-rossi/delphi-neon ./MCPConnect/Libs/Neon
 ```
 
-**5. Add to Project Path:** Add the `Source` directory of all cloned repositories to your Delphi Project's search path.
+**5. Clone the JOSE-JWT repository:**
+
+```bash
+git clone https://github.com/paolo-rossi/delphi-jose-jwt ./MCPConnect/Libs/JWT
+```
+
+**6. Add to Project Path:** Add the `Source` directory of all cloned repositories to your Delphi Project's search path.
 
