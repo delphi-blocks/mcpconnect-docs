@@ -105,7 +105,13 @@ begin
 end;
 ```
 
-`TMCPAccessToken` exposes standard claims (`Subject`, `Name`, `EMail`, `Scope`, `Issuer`, `Audience`, `Expiration`, etc.) and the raw JWT payload via the `Payload` property for direct access to any non-wrapped claim.
+`TMCPAccessToken` exposes standard claims (`Subject`, `Name`, `EMail`, `Scope`, `Issuer`, `Audience`, `Expiration`, etc.) and the raw JWT payload via the `Payload` property for direct access to any non-wrapped claim. To test the scopes, use `HasScope('orders:read')` rather than searching the `Scope` string: it matches whole, case-sensitive scopes only.
+
+The same object is filled by an [API key validator](./api-key#knowing-who-is-calling), so a tool written this way works unchanged whichever authentication the server uses.
+
+## Authorizing Tools, Resources and Prompts
+
+`AddRequiredScope` applies to the whole server: a token without that scope is rejected before any request is processed. To restrict individual tools, resources and prompts to the callers whose token carries the right scopes — and hide them from everyone else — see the [Authorization](./authorization) chapter.
 
 ## Further Reading
 

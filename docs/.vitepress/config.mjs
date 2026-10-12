@@ -42,8 +42,10 @@ export default defineConfig({
       {
         text: 'Security',
         items: [
-          { text: 'CORS & API-Key', link: '/authentication' },
-          { text: 'OAuth 2.1', link: '/oauth' }
+          { text: 'CORS', link: '/cors' },
+          { text: 'API Key', link: '/api-key' },
+          { text: 'OAuth 2.1', link: '/oauth' },
+          { text: 'Authorization', link: '/authorization' }
         ]
       },
       {
